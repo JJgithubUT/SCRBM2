@@ -1,0 +1,121 @@
+{% extends "dashboard.html" %}
+
+{% block titulo %} Oficios {% endblock %}
+
+
+{% block head %} {% endblock %}
+
+
+
+
+<body class="body_oficios">
+{% block contenido %}
+
+    <div class="contenido_oficios">
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="notifcacion {% if "Error" in message %} peligro {%  elif "Advertencia" in message %} advertencia {% else %} completado {% endif %} " id="notificacion">
+                        {{message}} 
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <h2>Tabla de oficios</h2>
+
+        <div class="btns_opcion_registro">
+            <a href="{{url_for('registrar_oficio')}}" class="btn_registrar boton">Registrar oficio</a>
+        </div>
+
+        <table class="tabla_oficios">
+            <thead>
+                <th>Editar</th>
+                <th>Nombre del oficio</th>
+                <th>Unidad</th>
+                <th>Costo</th>
+                <th>Eliminar</th>
+            </thead>
+            <tbody>
+                {% for oficio in oficios %}
+                <tr>
+                    <td>
+                        <a href="{{url_for('editar_oficio', id_oficio=oficio.id_oficio )}}" class="btn_editar"><i class="fa-solid fa-pen-to-square" ></i></a>
+                    </td>
+                    <td>{{oficio.nombre_oficio}}</td>
+                    <td>{{oficio.nombre_unidad}}</td>
+                    <td>${{oficio.costo_oficio}}</td>
+                    <td>
+                        
+                        <a class="btn_eliminar" href="#modal_eliminar_oficio_{{oficio.id_oficio}}"><i class="fa-solid fa-trash"></i></a>
+                    </td>
+    
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% for oficio in oficios %}
+        <div class="modal_eliminar_material" id="modal_eliminar_oficio_{{oficio.id_oficio}}">
+            <h3 style="font-size: 25px;">Eliminar oficio</h3>
+            <br>
+            <p>¿Estas seguro de eliminar este oficio?</p>
+            <br>
+            <p>{{oficio.nombre_oficio}} </p>
+            <div class="btns_eliminar_material">
+                <a href="{{url_for('eliminar_oficio', id_oficio = oficio.id_oficio)}}" class="boton_eliminar">Aceptar</a>
+                <a href="#" class="boton_cancelar">Cancelar</a>
+            </div>
+        </div>
+
+
+    {% endfor %}
+
+    <div class="paginador">
+        {% if total_pages == 1 and page== 1 %}
+        <a class="btn_inactivo">Aun sin páginas</a>
+         
+        {% endif %}
+
+        {% if page == 1 and total_pages > 1 %}
+        <a  class="btn_inactivo">Regresar</a>
+        <a href="{{url_for ('oficios')}}?page={{ page + 1 }}&per_page= {{ per_page }}" class="btn_avanzar">Avanazar</a>
+        <a class="contador">{{page}}/{{total_pages}} </a>
+
+        {% endif %}
+        {% if page > 1 and page != total_pages %}
+        <a href="{{url_for ('oficios')}}?page={{ page - 1 }}&per_page= {{ per_page }}" class="btn_retroceder">Regresar</a>
+        <a href="{{url_for ('oficios')}}?page={{ page + 1 }}&per_page= {{ per_page }}" class="btn_avanzar">Avanazar</a>
+        <a class="contador">{{page}}/{{total_pages}} </a>
+        {% endif %}
+
+        {% if page == total_pages and total_pages != 1 %}
+        <a href="{{url_for ('oficios')}}?page={{ page - 1 }}&per_page= {{ per_page }}" class="btn_retroceder">Regresar</a>
+        <a  class="btn_inactivo">Avanazar</a>
+        <a class="contador">{{page}}/{{total_pages}} </a>
+        {% endif %}
+    </div>
+
+
+    </div>
+
+
+    <script> 
+        function mostrarNotificacion() {
+            const notificacion = document.getElementById("notificacion");
+            notificacion.style.display = "block";
+        
+            // Cerrar la notificación después de 4 segundos
+            setTimeout(function() {
+                notificacion.style.display = "none";
+            }, 2000);
+        }
+        
+        // Mostrar la notificación para probar
+        mostrarNotificacion();
+    </script>
+   
+{% endblock %}
+</body>
+

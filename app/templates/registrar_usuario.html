@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registrar Usuario</title>
+    <link rel="stylesheet" href="{{url_for('static', filename = 'css/estilos.css')}}">
+    <script src="{{url_for('static', filename = 'JS/script.js')}}" defer></script>
+    <style>
+        /* Oculta la checkbox */
+        #activo {
+            display: none;
+        }
+    </style>
+</head>
+<body class="body_registrar_usuario">
+
+    <div class="contenido_registrar_usuario">
+        <h1>Registrate</h1>
+        <form method="POST" class="form_usuarios" action="{{ url_for('registrar_usuario') }}" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{csrf_token()}}">    
+
+            <p for="nombre">Nombre</p>
+            <input type="text" name="nombre" id="nombre" required placeholder="Ingresa tu nombre(s)">
+            
+            
+            <p for="apellidos">Apellidos</p>
+            <input type="text" name="apellidos" id="apellidos" required placeholder="Ingresa tus apellidos">
+           
+            
+            <p for="correo_usuario">Correo</p>
+            <input type="email" name="correo_usuario" id="correo_usuario" required placeholder="Ingresa tu correo">
+            
+            
+            <p for="contraseña_usuario">Contraseña</p>
+            <input type="password" name="contraseña_usuario" id="contraseña_usuario" required placeholder="Ingresa tu contraseña">
+            
+           
+            <input type="checkbox" name="activo" id="activo" checked>
+            
+            <button type="submit" class="boton btn_regis_usuario" id="btn_resgi_usuario">Registrar</button>
+        </form>
+    </div>
+    
+</body>
+
+

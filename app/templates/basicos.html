@@ -1,0 +1,82 @@
+{% extends "dashboard.html" %}
+
+{% block titulo %} Unidades {% endblock %}
+
+
+
+{% block head %} {% endblock %}
+
+<body class="body_basicos">
+
+    {% block contenido %}
+
+    <div class="contenido_basicos">
+
+        <h2 style="margin-left: 45%; margin-bottom: 50px; margin-top: 50px;">Basicos</h2>
+    <a class="boton" href="{{url_for('registrar_basico')}}">Registrar basico</a>
+
+    <table class="tabla_materiales">
+        <thead>
+            <th>Nombre</th>
+            <th>Unidad</th>
+            <th>Costo</th>
+            <th>Detalles</th>
+            <th>Eliminar</th>
+        </thead>
+        <tbody>
+            {% for basico in basicos %}
+            <tr>
+                <td>{{basico.nombre_basico}}</td>
+                <td>{{basico.nombre_unidad}}</td>
+                <td>${{ basico.suma_total | round(5) }}</td>
+                <td>
+                    <a href="{{url_for('detalles_basico', id_basico=basico.id_basico)}}" class="btn_registrar_basico"><i class="fa-solid fa-pen-to-square" ></i></a>
+                </td>
+                <td>
+                    <a class="btn_eliminar" href="#modal_eliminar_basico_{{ basico.id_basico }}"><i class="fa-solid fa-trash"></i></a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="paginador">
+        {% if total_pages == 1 and page== 1 %}
+        <a class="btn_inactivo">Aun sin páginas</a>
+         
+        {% endif %}
+
+        {% if page == 1 and total_pages > 1 %}
+        <a  class="btn_inactivo">Regresar</a>
+        <a href="{{url_for ('basicos')}}?page={{ page + 1 }}&per_page= {{ per_page }}" class="btn_avanzar">Avanazar</a>
+        <a class="contador">{{page}}/{{total_pages}} </a>
+
+        {% endif %}
+        {% if page > 1 and page != total_pages %}
+        <a href="{{url_for ('basicos')}}?page={{ page - 1 }}&per_page= {{ per_page }}" class="btn_retroceder">Regresar</a>
+        <a href="{{url_for ('basicos')}}?page={{ page + 1 }}&per_page= {{ per_page }}" class="btn_avanzar">Avanazar</a>
+        <a class="contador">{{page}}/{{total_pages}} </a>
+        {% endif %}
+
+        {% if page == total_pages and total_pages != 1 %}
+        <a href="{{url_for ('basicos')}}?page={{ page - 1 }}&per_page= {{ per_page }}" class="btn_retroceder">Regresar</a>
+        <a  class="btn_inactivo">Avanazar</a>
+        <a class="contador">{{page}}/{{total_pages}} </a>
+        {% endif %}
+    </div>
+
+{% for basico in basicos %}
+<div class="modal_eliminar_basico" id="modal_eliminar_basico_{{ basico.id_basico }}">
+    <h3 style="margin-bottom: 20px; font-size: 25px;">Eliminar basico</h3>
+    <p>¿Estas seguro de eliminar este basico</p>
+    <p>{{basico.nombre_basico}} </p>
+    <div class="btns_modal_crear_proyecto">
+        <a href="{{url_for('eliminar_basico', id_basico=basico.id_basico )}}">Aceptar</a>
+        <a href="#">Cancelar</a>
+    </div>
+</div>
+{% endfor %}
+
+     {% endblock %}
+    
+</body>

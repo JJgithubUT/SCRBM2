@@ -1,0 +1,116 @@
+{% extends "dashboard.html" %}
+
+{% block titulo %} Unidades {% endblock %}
+
+
+
+{% block head %} {% endblock %}
+
+
+
+
+<body class="body_unidades">
+
+    
+
+    {% block contenido %}
+
+    
+
+    <div class="contenido_unidades">
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="notifcacion {% if "Error" in message %} peligro {%  elif "Advertencia" in message %} advertencia {% else %} completado {% endif %} " id="notificacion">
+                        {{message}} 
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <h2>Unidades de medida</h2>
+
+        <div class="btns_opcion_registro">
+            <a href="{{url_for('form_regis_unidad')}}" class="btn_registrar boton">Registrar una nueva unidad</a>
+        </div>
+
+        <table class="tabla_unidades">
+            <thead>
+                <tr>
+                    <th>Editar</th>
+                    <th>Unidad de medida</th>
+                    <th>Eliminar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for unidad in unidades %}
+                <tr>
+                    <td>
+                        <a href="{{url_for('editar_unidad', id_unidad=unidad.id_unidad)}}" class="btn_editar"><i class="fa-solid fa-pen-to-square" ></i></a>
+                    </td>
+                    <td>{{unidad.nombre_unidad}}</td>
+                    <td>
+                        <a class="btn_eliminar" href="#id_modal_eliminar_unidad_{{unidad.id_unidad}}"><i class="fa-solid fa-trash"></i></a>
+                    </td>                   
+                </tr>
+                {% endfor %}
+            </tbody> 
+        </table>
+
+        {% for unidad in unidades %}
+        <div class="modal_eliminar_unidad" id="id_modal_eliminar_unidad_{{unidad.id_unidad}}">
+            <h3 style="margin-bottom: 20px; font-size: 25px;">Eliminar unidad</h3>
+            <p>¿Esta seguro de eliminar esta unidad?</p>
+            <p>{{unidad.nombre_unidad}} </p>
+            <div class="opciones_eliminar_unidad">
+                <a href="{{url_for('eliminar_unidad', id_unidad=unidad.id_unidad)}}" class="btn_aceptar_eliminar_unidad boton_eliminar">Aceptar</a> 
+                <a href="#"  class="boton_cancelar">Cancelar</a>
+            </div>
+        </div>
+    {% endfor %}
+
+    <div class="paginador">
+        {% if total_pages == 1 and page== 1 %}
+        <a class="btn_inactivo">Aun sin páginas</a>
+         
+        {% endif %}
+
+        {% if page == 1 and total_pages > 1 %}
+        <a  class="btn_inactivo">Regresar</a>
+        <a href="{{url_for ('unidades')}}?page={{ page + 1 }}&per_page= {{ per_page }}" class="btn_avanzar">Avanazar</a>
+        <a class="contador">{{page}}/{{total_pages}} </a>
+
+        {% endif %}
+        {% if page > 1 and page != total_pages %}
+        <a href="{{url_for ('unidades')}}?page={{ page - 1 }}&per_page= {{ per_page }}" class="btn_retroceder">Regresar</a>
+        <a href="{{url_for ('unidades')}}?page={{ page + 1 }}&per_page= {{ per_page }}" class="btn_avanzar">Avanazar</a>
+        <a class="contador">{{page}}/{{total_pages}} </a>
+        {% endif %}
+
+        {% if page == total_pages and total_pages != 1 %}
+        <a href="{{url_for ('unidades')}}?page={{ page - 1 }}&per_page= {{ per_page }}" class="btn_retroceder">Regresar</a>
+        <a  class="btn_inactivo">Avanazar</a>
+        <a class="contador">{{page}}/{{total_pages}} </a>
+        {% endif %}
+    </div>
+
+    </div>
+
+    <script> 
+        function mostrarNotificacion() {
+            const notificacion = document.getElementById("notificacion");
+            notificacion.style.display = "block";
+        
+            // Cerrar la notificación después de 4 segundos
+            setTimeout(function() {
+                notificacion.style.display = "none";
+            }, 2000);
+        }
+        
+        // Mostrar la notificación para probar
+        mostrarNotificacion();
+    </script>
+
+{% endblock %}    
+</body>
