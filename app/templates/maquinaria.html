@@ -3,7 +3,32 @@
 {% block titulo %} Maquinaria {% endblock %}
 
 
-{% block head %} {% endblock %}
+{% block head %}
+<style>
+    .form_busqueda input{
+        margin-top: 25px;
+        margin-left: 250px;
+        padding: 10px 11px;
+        width: 400px;
+        border-radius: 15px;
+        border: 1px solid black;
+        outline-color: #00c4da;
+        margin-bottom: 10px;
+    }
+    .form_busqueda button {
+        width: 40px;
+        height: 40px;
+        border: 1px solid black;
+        border-radius: 40%;
+    }
+    .form_busqueda a {
+        width: 40px;
+        height: 40px;
+        border: 1px solid black;
+        border-radius: 40%;
+    }
+    </style>
+{% endblock %}
 
 <body class="body_maquinaria">
 
@@ -25,6 +50,14 @@
 
         <div class="btns_opcion_registro">
             <a href="{{url_for('registrar_maquinaria')}}" class="btn_registrar boton">Registrar maquina</a>
+        </div>
+
+        <div>
+            <form action="{{url_for('maquinaria')}}" class="form_busqueda">
+                <input type="text" name="buscar" placeholder="Buscar..." required>
+                <button type="submit"><i class="fas fa-search"></i></button>
+                <a href="{{url_for('maquinaria')}}"><i class="fa-solid fa-rotate-right"></i></a>
+            </form>
         </div>
 
         <table class="tabla_maquinas">

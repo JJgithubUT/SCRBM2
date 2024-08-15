@@ -247,6 +247,48 @@ def paginador(sql_count,sql_lim,in_page,per_pages):
     
     return items, page, per_page, total_items, total_pages 
 
+
+def paginador2(sql_count: str, sql_lim: str, search_query: str, in_page: int, per_pages: int) -> tuple[list[dict], int, int, int, int]:
+# Obtener parámetros de paginación
+    page = request.args.get('page', in_page, type=int)
+    per_page = request.args.get('per_page', per_pages, type=int)
+
+    # Validar los valores de entrada
+    if page < 1:
+        page = 1
+    if per_page < 1:
+        per_page = 1
+
+    offset = (page - 1) * per_page
+
+    try:
+        # Conectar a la base de datos
+        conn = get_db_conection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Ejecutar consulta para contar el total de elementos que coinciden con la búsqueda
+        cursor.execute(sql_count, (f"%{search_query}%",))
+        total_items = cursor.fetchone()['count']
+
+        # Ejecutar consulta para obtener elementos paginados que coinciden con la búsqueda
+        cursor.execute(sql_lim, (f"%{search_query}%", per_page, offset))
+        items = cursor.fetchall()
+
+    except psycopg2.Error as e:
+        print(f"Error en la base de datos: {e}")
+        items = []
+        total_items = 0
+    finally:
+        # Asegurar el cierre de la conexión
+        cursor.close()
+        conn.close()
+
+    # Calcular el total de páginas
+    total_pages = (total_items + per_page - 1) // per_page
+
+    return items, page, per_page, total_items, total_pages
+
+
 #=======================================FIN PAGINADOR=============================================================
 
 #=============================================LISTAR MATERIAL=================================================
@@ -394,12 +436,12 @@ def detalles_proyecto(id_proyecto):
     cur.execute('SELECT id_unidad, nombre_unidad FROM public.unidades WHERE visibilidad_unidad=true;')
     unidades=cur.fetchall()
     conn.commit()
-    cur.execute('SELECT * FROM vista_costo_proyectos WHERE fk_proy_con = %s;', (id_proyecto,))
+    cur.execute('SELECT fn_costo_proyecto(%s);', (id_proyecto,))
     result = cur.fetchone()
     if result is None:
         costo_total_de_proyecto = 0
     else:
-        costo_total_de_proyecto = result[1]
+        costo_total_de_proyecto = result[0]
     conn.commit()   
     cur.close()
     conn.close()
@@ -498,7 +540,7 @@ def detalles_concepto(id_concepto):
     cur.execute('SELECT * FROM vista_unidades;')
     unidades = cur.fetchall()
 
-    cur.execute('SELECT costo_total_concepto FROM vista_conceptos WHERE id_concepto = %s;', (id_concepto,))
+    cur.execute('SELECT fn_importe_concepto(%s);', (id_concepto,))
     result = cur.fetchone()
     if result is None:
         costo_concepto_total = 0
@@ -808,9 +850,10 @@ def eliminar_oficio_concepto(id_concepto, id_cuadofi):
 @app.route ("/dashboard")
 @login_required
 def dashboard():
-    sql_count = 'SELECT COUNT(*) FROM proyectos WHERE visible_proyecto = true' 
-    sql_lim = 'SELECT * FROM public.proyectos WHERE visible_proyecto=true LIMIT %s OFFSET %s;'
-    paginado = paginador(sql_count, sql_lim,1,8)
+    search_query = request.args.get('buscar', '', type=str)
+    sql_count = 'SELECT COUNT(*) FROM proyectos WHERE visible_proyecto = true AND (proyectos.nombre_proyecto ILIKE %s)' 
+    sql_lim = 'SELECT * FROM public.proyectos WHERE visible_proyecto=true AND (proyectos.nombre_proyecto ILIKE %s) LIMIT %s OFFSET %s;'
+    paginado = paginador2(sql_count, sql_lim, search_query,1,8)
     
     return render_template('dashboard.html',
                            proyectos= paginado[0],
@@ -826,9 +869,10 @@ def dashboard():
 @app.route("/unidades")
 @login_required
 def unidades():
-    sql_count= 'SELECT COUNT(*) FROM unidades WHERE visibilidad_unidad=true'
-    sql_lim = 'SELECT * FROM public.unidades WHERE visibilidad_unidad = true ORDER BY id_unidad ASC LIMIT %s OFFSET %s'     
-    paginado = paginador(sql_count, sql_lim,1,7) 
+    search_query = request.args.get('buscar', '', type=str)
+    sql_count= 'SELECT COUNT(*) FROM unidades WHERE visibilidad_unidad=true AND (unidades.nombre_unidad ILIKE %s)'
+    sql_lim = 'SELECT * FROM public.unidades WHERE visibilidad_unidad = true AND (unidades.nombre_unidad ILIKE %s) ORDER BY id_unidad ASC LIMIT %s OFFSET %s'     
+    paginado = paginador2(sql_count, sql_lim, search_query,1,10) 
     
     return render_template('unidades.html',
                            unidades = paginado[0],
@@ -928,9 +972,10 @@ def eliminar_unidad(id_unidad):
 @app.route('/materiales')
 @login_required
 def materiales():
-    sql_count= 'SELECT COUNT(*) FROM materiales where visibilidad_material=true'
-    sql_lim = 'SELECT materiales.id_material, materiales.nombre_material, materiales.costo_material, unidades.nombre_unidad FROM materiales INNER JOIN unidades ON materiales.fk_unidad = unidades.id_unidad WHERE visibilidad_material = true ORDER BY nombre_material ASC LIMIT %s OFFSET %s'     
-    paginado = paginador(sql_count, sql_lim,1,7) 
+    search_query = request.args.get('buscar', '', type=str)
+    sql_count= 'SELECT COUNT(*) FROM materiales where visibilidad_material=true AND (materiales.nombre_material ILIKE %s)'
+    sql_lim = 'SELECT materiales.id_material, materiales.nombre_material, materiales.costo_material, unidades.nombre_unidad FROM materiales INNER JOIN unidades ON materiales.fk_unidad = unidades.id_unidad WHERE visibilidad_material = true AND (materiales.nombre_material ILIKE %s) ORDER BY nombre_material ASC LIMIT %s OFFSET %s'     
+    paginado = paginador2(sql_count, sql_lim, search_query,1,9) 
    
     return render_template('materiales.html', 
                            materiales = paginado[0],
@@ -1040,9 +1085,10 @@ def eliminar_material(id_material):
 @app.route("/maquinaria")
 @login_required
 def maquinaria():
-    sql_count='SELECT COUNT(*) FROM maquinaria where visibilidad=true'
-    sql_lim='SELECT maquinaria.id_maquina, maquinaria.nombre_maquina, maquinaria.costo_maquina, maquinaria.vida_util, unidades.nombre_unidad FROM maquinaria INNER JOIN unidades ON fk_unidad = id_unidad WHERE  visibilidad IS true LIMIT %s OFFsET %s'
-    paginado = paginador(sql_count,sql_lim, 1, 7)
+    search_query = request.args.get('buscar', '', type=str)
+    sql_count='SELECT COUNT(*) FROM maquinaria where visibilidad=true AND (maquinaria.nombre_maquina ILIKE %s)'
+    sql_lim='SELECT maquinaria.id_maquina, maquinaria.nombre_maquina, maquinaria.costo_maquina, maquinaria.vida_util, unidades.nombre_unidad FROM maquinaria INNER JOIN unidades ON fk_unidad = id_unidad WHERE  visibilidad IS true AND (maquinaria.nombre_maquina ILIKE %s) LIMIT %s OFFsET %s'
+    paginado = paginador2(sql_count,sql_lim, search_query, 1, 7)
     return render_template('maquinaria.html', maquinaria = paginado[0],
                            page = paginado[1],
                            per_page = paginado[2], 
@@ -1139,9 +1185,10 @@ def eliminar_maquinaria(id_maquina):
 @app.route('/oficios')
 @login_required
 def oficios():
-    sql_count= 'SELECT COUNT(*) FROM oficios where visibilidad=true'
-    sql_lim= 'SELECT id_oficio, nombre_oficio, unidades.nombre_unidad, costo_oficio, visibilidad  FROM oficios INNER JOIN unidades ON oficios.fk_unidad = unidades.id_unidad WHERE visibilidad = true ORDER BY nombre_oficio ASC LIMIT %s OFFSET %s'
-    paginado = paginador(sql_count, sql_lim, 1, 7)
+    search_query = request.args.get('buscar', '', type=str)
+    sql_count= 'SELECT COUNT(*) FROM oficios where visibilidad=true AND (oficios.nombre_oficio ILIKE %s)'
+    sql_lim= 'SELECT id_oficio, nombre_oficio, unidades.nombre_unidad, costo_oficio, visibilidad  FROM oficios INNER JOIN unidades ON oficios.fk_unidad = unidades.id_unidad WHERE visibilidad = true AND (oficios.nombre_oficio ILIKE %s) ORDER BY nombre_oficio ASC LIMIT %s OFFSET %s'
+    paginado = paginador2(sql_count, sql_lim, search_query, 1, 7)
     return render_template('oficios.html', oficios = paginado[0],
                            page = paginado[1],
                            per_page = paginado[2], 
@@ -1251,9 +1298,10 @@ def basicos():
     cur.close()
     conn.close()
 
-    sql_count = 'SELECT COUNT(*) FROM vista_basicos' 
-    sql_lim = 'SELECT * FROM vista_basicos LIMIT %s OFFSET %s;' # VISTA INSERTADA VISTA INSERTADA VISTA INSERTADA VISTA INSERTADA VISTA INSERTADA VISTA INSERTADA VISTA INSERTADA
-    paginado = paginador(sql_count, sql_lim,1,8)
+    search_query = request.args.get('buscar', '', type=str)
+    sql_count = 'SELECT COUNT(*) FROM vista_basicos WHERE (vista_basicos.nombre_basico ILIKE %s)' 
+    sql_lim = 'SELECT * FROM vista_basicos WHERE (vista_basicos.nombre_basico ILIKE %s) LIMIT %s OFFSET %s;' # VISTA INSERTADA VISTA INSERTADA VISTA INSERTADA VISTA INSERTADA VISTA INSERTADA VISTA INSERTADA VISTA INSERTADA
+    paginado = paginador2(sql_count, sql_lim, search_query,1,8)
     return render_template('basicos.html', basicos = paginado[0],
                            page = paginado[1],
                            per_page = paginado[2],

@@ -4,7 +4,32 @@
 
 
 
-{% block head %} {% endblock %}
+{% block head %}
+<style>
+    .form_busqueda input{
+        margin-top: 25px;
+        margin-left: 250px;
+        padding: 10px 11px;
+        width: 400px;
+        border-radius: 15px;
+        border: 1px solid black;
+        outline-color: #00c4da;
+        margin-bottom: 10px;
+    }
+    .form_busqueda button {
+        width: 40px;
+        height: 40px;
+        border: 1px solid black;
+        border-radius: 40%;
+    }
+    .form_busqueda a {
+        width: 40px;
+        height: 40px;
+        border: 1px solid black;
+        border-radius: 40%;
+    }
+    </style>
+{% endblock %}
 
 <body class="body_basicos">
 
@@ -14,6 +39,14 @@
 
         <h2 style="margin-left: 45%; margin-bottom: 50px; margin-top: 50px;">Basicos</h2>
     <a class="boton" href="{{url_for('registrar_basico')}}">Registrar basico</a>
+
+    <div>
+        <form action="{{url_for('basicos')}}" class="form_busqueda">
+            <input type="text" name="buscar" placeholder="Buscar..." required>
+            <button type="submit"><i class="fas fa-search"></i></button>
+            <a href="{{url_for('basicos')}}"><i class="fa-solid fa-rotate-right"></i></a>
+        </form>
+    </div>
 
     <table class="tabla_materiales">
         <thead>
